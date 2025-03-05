@@ -6,7 +6,8 @@
 // @author           snomiao@gmail.com
 // @match            *://*/*
 // @contributionURL  https://snomiao.com/donate
-// @supportURL       https://github.com/snomiao/userscript/issues
+// @supportURL       https://github.com/snomiao/media-color-invert/issues
+// @downloadURL      https://github.com/snomiao/media-color-invert/raw/main/media-color-invert.user.js
 // @grant            GM.getValue
 // @grant            GM.setValue
 // @run-at           document-start
@@ -17,28 +18,6 @@ function main() {
   const ac = new AbortController();
   globalThis.MediaColorInvert?.abort();
   globalThis.MediaColorInvert = ac;
-
-  const scan = async () => {
-    const invert = await getInvert();
-    const textNode = document.createTextNode(`
-.body{
-filter: hue-rotate(180deg);
-}
-video,img{
-filter: invert(1);
-}
-svg:not(:has(svg)){
-filter: hue-rotate(180deg);
-}
-`);
-    const style = document.createElement("style");
-    style.appendChild(textNode);
-    style.id = "media-color-invert";
-    const s = document.head?.querySelector("&>#media-color-invert");
-
-    if (s && !invert) s.remove();
-    if (!s && invert) document.head.appendChild(style);
-  };
 
   const signal = ac.signal;
   // watch
@@ -53,10 +32,32 @@ filter: hue-rotate(180deg);
 
   // toggle
   window.addEventListener("keydown", (e) => isAltI(e) && toggle(), { signal });
-  async function toggle() {
-    await setInvert(!(await getInvert()));
-    await scan();
-  }
+}
+
+async function toggle() {
+  await setInvert(!(await getInvert()));
+  await scan();
+}
+async function scan() {
+  const invert = await getInvert();
+  const textNode = document.createTextNode(`
+.body{
+filter: hue-rotate(180deg);
+}
+video,img{
+filter: invert(1);
+}
+svg:not(:has(svg)){
+filter: hue-rotate(180deg);
+}
+`);
+  const style = document.createElement("style");
+  style.appendChild(textNode);
+  style.id = "media-color-invert";
+  const s = document.head?.querySelector("&>#media-color-invert");
+
+  if (s && !invert) s.remove();
+  if (!s && invert) document.head.appendChild(style);
 }
 
 async function getInvert() {
@@ -67,7 +68,7 @@ async function setInvert(i) {
 }
 
 function isAltI(e) {
-  return e.altKey && !e.metaKey && !e.shiftKey && !e.ctrlKey && e.key === "i";
+  return e.altKey && !e.metaKey && !e.shiftKey && !e.ctrlKey && e.code === "KeyI";
 }
 
 function debounce(func, delay) {

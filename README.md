@@ -1,46 +1,57 @@
 # Media Color Invert
 
-A browser userscript that inverts colors of images and videos on web pages using Alt+i hotkey. Perfect for night browsing and reducing eye strain.
+A userscript that toggles CSS color filters for images, videos, and SVGs with **Alt + i**. It is intended to complement an inverted screen color filter, so media can retain its natural colors while the surrounding interface appears dark.
 
-## Features
-
-- **Quick Toggle**: Press Alt+i to instantly invert colors of all media elements on the page
-- **Smart Inversion**: Inverts images and videos while maintaining correct colors for other elements
-- **Persistent Settings**: Remembers your preference per website
-- **Lightweight**: Minimal performance impact with debounced scanning
-- **Universal Compatibility**: Works on all websites
-
-![dark-demo](dark-demo.png)
+![Example with screen color inversion enabled](dark-demo.png)
 
 ## Installation
 
-1. Install a userscript manager extension:
-   - [Tampermonkey](https://www.tampermonkey.net/) (Chrome, Firefox, Safari, Edge)
-   - [Greasemonkey](https://www.greasespot.net/) (Firefox)
-   - [Violentmonkey](https://violentmonkey.github.io/) (Chrome, Firefox, Edge)
+1. Install a userscript manager that supports the asynchronous `GM.getValue` and `GM.setValue` APIs.
+2. [Install the userscript](https://github.com/snomiao/media-color-invert/raw/main/media-color-invert.user.js).
+3. Confirm the installation in your userscript manager.
 
-2. Install the script:
-   - Click [here to install](https://github.com/snomiao/media-color-invert/raw/main/media-color-invert.user.js)
-   - Or manually copy the script from `media-color-invert.user.js`
+The script matches HTTP and HTTPS pages. Your browser and userscript manager must allow it to run on the page; browser-internal pages are outside that match.
 
 ## Usage
 
-- **Toggle Inversion**: Press `Alt + i` on any webpage
-- The setting is saved automatically and will be remembered when you revisit the page
-- Works great in combination with Windows' built-in color inversion (`Ctrl + Windows + C`) for a complete dark mode experience
+Press **Alt + i** to toggle the filter. Ctrl, Shift, and the Command/Meta key must not be held with the shortcut.
 
-## How It Works
+The preference is stored under the single `media-color-invert` key in userscript storage. It is shared by the script across sites, rather than stored separately for each website, and defaults to off. Open tabs apply the preference when toggled or when they regain focus.
 
-The script applies CSS filters to invert the colors of media elements:
-- Images and videos are inverted using `filter: invert(1)`
-- The page gets a complementary `hue-rotate(180deg)` to maintain color relationships
-- SVG elements are handled separately to preserve their appearance
+For use with Windows screen inversion, first configure an inverted color filter and enable its keyboard shortcut in Windows accessibility settings. **Ctrl + Windows + C** toggles the configured screen filter; **Alt + i** toggles this script's additional page filters. The script itself does not change Windows settings.
 
-## Support
+## How it works
 
-- [Report Issues](https://github.com/snomiao/media-color-invert/issues)
-- [Donate](https://snomiao.com/donate)
+When enabled, the script inserts a style element with these rules:
+
+```css
+.body {
+  filter: hue-rotate(180deg);
+}
+video, img {
+  filter: invert(1);
+}
+svg:not(:has(svg)) {
+  filter: hue-rotate(180deg);
+}
+```
+
+`.body` matches a CSS class, not the HTML `body` element. A hue rotation changes hues; it is not a full brightness inversion. The result depends on the page's own styling and any screen-level color filter.
+
+The script checks its setting at startup, on window focus, and after the shortcut. The CSS selectors also apply to newly inserted matching elements. There is no active DOM mutation observer or debounced scan loop.
+
+## Requirements and limitations
+
+- The userscript requests `GM.getValue` and `GM.setValue` for preference storage and runs at `document-start`.
+- It needs a page with an available `document.head` when inserting its style. If initialization happens too early, focus the page again to trigger another check.
+- SVG filtering uses the CSS `:has()` selector, which requires browser support.
+- Filters target matching elements in the document. Content inside shadow roots and page-specific filter rules can behave differently; compatibility with every website is not guaranteed.
+- Script version: **1.1.0**. This README update does not change runtime behavior.
+
+## Contributing and support
+
+[Report a bug or suggest an improvement](https://github.com/snomiao/media-color-invert/issues), including your browser, userscript manager, and a reproducible example. Documentation improvements and pull requests are welcome.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details
+[MIT](LICENSE).

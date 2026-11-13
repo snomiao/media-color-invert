@@ -1,83 +1,57 @@
 # Media Color Invert
 
-A browser userscript that provides intelligent color inversion for images and videos on web pages. Perfect for night browsing and reducing eye strain, especially when used with Windows' built-in color inversion feature.
+A userscript that toggles CSS color filters for images, videos, and SVGs with **Alt + i**. It is intended to complement an inverted screen color filter, so media can retain its natural colors while the surrounding interface appears dark.
 
-## Features
-
-- **Quick Toggle**: Press `Alt + i` to instantly invert colors of all media elements on the page
-- **Smart Inversion**: Inverts images and videos while maintaining correct colors for other elements
-- **Persistent Settings**: Remembers your preference per website across browser sessions
-- **Lightweight**: Minimal performance impact with debounced scanning
-- **Universal Compatibility**: Works on all websites
-- **Windows Integration**: Designed to complement Windows' `Ctrl + Windows + C` screen color inversion
-
-![dark-demo](dark-demo.png)
+![Example with screen color inversion enabled](dark-demo.png)
 
 ## Installation
 
-### Prerequisites
-- A userscript manager extension:
-  - [Tampermonkey](https://www.tampermonkey.net/) (Chrome, Firefox, Safari, Edge)
-  - [Greasemonkey](https://www.greasespot.net/) (Firefox)
-  - [Violentmonkey](https://violentmonkey.github.io/) (Chrome, Firefox, Edge)
+1. Install a userscript manager that supports the asynchronous `GM.getValue` and `GM.setValue` APIs.
+2. [Install the userscript](https://github.com/snomiao/media-color-invert/raw/main/media-color-invert.user.js).
+3. Confirm the installation in your userscript manager.
 
-### Install Steps
-1. Install a userscript manager in your browser
-2. Click [here to install](https://github.com/snomiao/media-color-invert/raw/main/media-color-invert.user.js)
-3. Your userscript manager will prompt you to install the script
-4. Confirm the installation
+The script matches HTTP and HTTPS pages. Your browser and userscript manager must allow it to run on the page; browser-internal pages are outside that match.
 
 ## Usage
 
-### Basic Usage
-- Press `Alt + i` on any webpage to toggle color inversion for images and videos
-- The setting is saved automatically and will be remembered when you revisit the page
+Press **Alt + i** to toggle the filter. Ctrl, Shift, and the Command/Meta key must not be held with the shortcut.
 
-### Perfect Dark Mode Setup (Windows)
-For the ultimate dark mode experience:
+The preference is stored under the single `media-color-invert` key in userscript storage. It is shared by the script across sites, rather than stored separately for each website, and defaults to off. Open tabs apply the preference when toggled or when they regain focus.
 
-1. **Enable Windows Color Inversion**: Press `Ctrl + Windows + C` to invert your entire screen
-2. **Use This Script**: Press `Alt + i` on web pages to re-invert images and videos back to their natural colors
-3. **Result**: You get a true dark mode where:
-   - All UI elements are inverted (dark backgrounds, light text)
-   - Images and videos appear in their original colors
-   - Perfect for night browsing and reducing eye strain
+For use with Windows screen inversion, first configure an inverted color filter and enable its keyboard shortcut in Windows accessibility settings. **Ctrl + Windows + C** toggles the configured screen filter; **Alt + i** toggles this script's additional page filters. The script itself does not change Windows settings.
 
-## How It Works
+## How it works
 
-The script applies CSS filters to achieve color inversion:
+When enabled, the script inserts a style element with these rules:
 
-- **Page Content**: Uses `hue-rotate(180deg)` to invert the overall page colors
-- **Media Elements**: Applies `filter: invert(1)` to images and videos to restore their natural appearance
-- **SVG Elements**: Handles SVG graphics separately to preserve their appearance
+```css
+.body {
+  filter: hue-rotate(180deg);
+}
+video, img {
+  filter: invert(1);
+}
+svg:not(:has(svg)) {
+  filter: hue-rotate(180deg);
+}
+```
 
-## Technical Details
+`.body` matches a CSS class, not the HTML `body` element. A hue rotation changes hues; it is not a full brightness inversion. The result depends on the page's own styling and any screen-level color filter.
 
-- **Version**: 1.1.0
-- **Namespace**: snomiao@gmail.com
-- **Permissions**: Uses `GM.getValue` and `GM.setValue` for preference storage
-- **Execution**: Runs at `document-start` for optimal performance
-- **Compatibility**: Works with all modern browsers
+The script checks its setting at startup, on window focus, and after the shortcut. The CSS selectors also apply to newly inserted matching elements. There is no active DOM mutation observer or debounced scan loop.
 
-## Contributing
+## Requirements and limitations
 
-Contributions are welcome! Please feel free to:
+- The userscript requests `GM.getValue` and `GM.setValue` for preference storage and runs at `document-start`.
+- It needs a page with an available `document.head` when inserting its style. If initialization happens too early, focus the page again to trigger another check.
+- SVG filtering uses the CSS `:has()` selector, which requires browser support.
+- Filters target matching elements in the document. Content inside shadow roots and page-specific filter rules can behave differently; compatibility with every website is not guaranteed.
+- Script version: **1.1.0**. This README update does not change runtime behavior.
 
-- Report bugs or issues
-- Suggest new features
-- Submit pull requests
-- Improve documentation
+## Contributing and support
 
-## Support
-
-- [Report Issues](https://github.com/snomiao/media-color-invert/issues)
-- [Donate](https://snomiao.com/donate)
+[Report a bug or suggest an improvement](https://github.com/snomiao/media-color-invert/issues), including your browser, userscript manager, and a reproducible example. Documentation improvements and pull requests are welcome.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details
-
-## Author
-
-- **snomiao** - [snomiao@gmail.com](mailto:snomiao@gmail.com)
-- **GitHub**: [snomiao](https://github.com/snomiao)
+[MIT](LICENSE).
